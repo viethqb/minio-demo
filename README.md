@@ -172,7 +172,7 @@ Open again: http://172.16.16.101:9001/tools/metrics
 
 The cluster will show **8 servers / 32 drives**.  
 
-Note: MinIO **does not rebalance automatically**. Existing data stays on nodes 1–4; nodes 5–8 have lower usage (e.g. nodes 1–4: ~664.1 MiB, nodes 5–8: ~103.7 MiB). Run rebalance manually (step 4).
+Note: MinIO **does not rebalance automatically**. Existing data stays on nodes 1–4; nodes 5–8 have lower usage (e.g. nodes 1–4: ~861.4 MiB, nodes 5–8: ~5 MiB). Run rebalance manually (step 4).
 
 ---
 
@@ -217,7 +217,7 @@ After rebalance completes, usage is balanced across pools:
 Per-pool usage:
 ┌────────┬────────┐
 │ Pool-0 │ Pool-1 │
-│ 61.00% │ 40.73% │
+│ 44.42% │ 40.74% │
 └────────┴────────┘
 Summary:
 Data: 5.8 GiB (10 objects, 10 versions)
