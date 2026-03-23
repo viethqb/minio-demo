@@ -1,0 +1,138 @@
+# =============================================================================
+# MinIO Decommission Demo - Phase 2: Pool 2 Only (after decommission complete)
+# Pool 2: 4 nodes (minio5-8) x 8 drives = 32 drives
+# =============================================================================
+#
+# Use this ONLY after decommission of Pool 1 has completed.
+# This removes Pool 1 nodes and runs the cluster with Pool 2 alone.
+#
+# Usage: docker compose -f docker-compose.expand.yml down
+#        docker compose -f docker-compose.phase2.yml up -d
+
+x-minio-common: &minio-common
+  image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+  extra_hosts:
+    - "minio5:172.16.0.15"
+    - "minio6:172.16.0.16"
+    - "minio7:172.16.0.17"
+    - "minio8:172.16.0.18"
+  environment:
+    MINIO_ROOT_USER: admin
+    MINIO_ROOT_PASSWORD: password123
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+    interval: 30s
+    timeout: 20s
+    retries: 3
+
+services:
+  # ---------------------------------------------------------------------------
+  # Pool 2: minio5 - minio8 (8 drives each)
+  # ---------------------------------------------------------------------------
+  minio5:
+    <<: *minio-common
+    hostname: minio5
+    container_name: minio5
+    command: server --console-address ":9001" http://minio{5...8}/data{1...8}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/pool2/minio5/data1:/data1
+      - ./data/pool2/minio5/data2:/data2
+      - ./data/pool2/minio5/data3:/data3
+      - ./data/pool2/minio5/data4:/data4
+      - ./data/pool2/minio5/data5:/data5
+      - ./data/pool2/minio5/data6:/data6
+      - ./data/pool2/minio5/data7:/data7
+      - ./data/pool2/minio5/data8:/data8
+    networks:
+      minio_net:
+        ipv4_address: 172.16.0.15
+
+  minio6:
+    <<: *minio-common
+    hostname: minio6
+    container_name: minio6
+    command: server --console-address ":9001" http://minio{5...8}/data{1...8}
+    volumes:
+      - ./data/pool2/minio6/data1:/data1
+      - ./data/pool2/minio6/data2:/data2
+      - ./data/pool2/minio6/data3:/data3
+      - ./data/pool2/minio6/data4:/data4
+      - ./data/pool2/minio6/data5:/data5
+      - ./data/pool2/minio6/data6:/data6
+      - ./data/pool2/minio6/data7:/data7
+      - ./data/pool2/minio6/data8:/data8
+    networks:
+      minio_net:
+        ipv4_address: 172.16.0.16
+
+  minio7:
+    <<: *minio-common
+    hostname: minio7
+    container_name: minio7
+    command: server --console-address ":9001" http://minio{5...8}/data{1...8}
+    volumes:
+      - ./data/pool2/minio7/data1:/data1
+      - ./data/pool2/minio7/data2:/data2
+      - ./data/pool2/minio7/data3:/data3
+      - ./data/pool2/minio7/data4:/data4
+      - ./data/pool2/minio7/data5:/data5
+      - ./data/pool2/minio7/data6:/data6
+      - ./data/pool2/minio7/data7:/data7
+      - ./data/pool2/minio7/data8:/data8
+    networks:
+      minio_net:
+        ipv4_address: 172.16.0.17
+
+  minio8:
+    <<: *minio-common
+    hostname: minio8
+    container_name: minio8
+    command: server --console-address ":9001" http://minio{5...8}/data{1...8}
+    volumes:
+      - ./data/pool2/minio8/data1:/data1
+      - ./data/pool2/minio8/data2:/data2
+      - ./data/pool2/minio8/data3:/data3
+      - ./data/pool2/minio8/data4:/data4
+      - ./data/pool2/minio8/data5:/data5
+      - ./data/pool2/minio8/data6:/data6
+      - ./data/pool2/minio8/data7:/data7
+      - ./data/pool2/minio8/data8:/data8
+    networks:
+      minio_net:
+        ipv4_address: 172.16.0.18
+
+  # ---------------------------------------------------------------------------
+  # MinIO Client
+  # ---------------------------------------------------------------------------
+  mc:
+    container_name: mc
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio5:
+        condition: service_healthy
+      minio6:
+        condition: service_healthy
+      minio7:
+        condition: service_healthy
+      minio8:
+        condition: service_healthy
+    networks:
+      minio_net:
+    entrypoint: >
+      /bin/sh -c "
+      echo '==> Configuring mc alias...';
+      mc alias set myminio http://minio5:9000 admin password123;
+      echo '==> Done. Cluster is running Pool 2 only (4 nodes x 8 drives).';
+      echo '==> Pool 1 has been decommissioned and removed.';
+      tail -f /dev/null
+      "
+
+networks:
+  minio_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24
